@@ -1,5 +1,5 @@
 {
-  // Cloudflare Worker that serves the website (./public) and the API (/api/*).
+  // One Cloudflare Worker: files in ./public are served directly; /api/*, the website pages and /sitemap.xml run src/index.js.
   "name": "guru-computer-institute",
   "main": "src/index.js",
   "compatibility_date": "2025-09-01",
@@ -7,16 +7,17 @@
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "none",
     "run_worker_first": ["/api/*"]
   },
   "observability": { "enabled": true },
   "vars": {
+    "SITE_URL": "https://www.gurucomputerinstitute.com",
     "MONGODB_DB": "GuruComputerWebsite",
-    "MAIL_FROM_NAME": "Guru Computer Institute"
+    "MAIL_FROM_NAME": "Guru Computer Institute",
+    "STUDENT_ID_PREFIX": "GCI2022"
   }
-  // Secrets (set in the Cloudflare dashboard, never in this file):
-  //   MONGODB_URI     - Atlas connection string
-  //   SESSION_SECRET  - long random text, at least 32 characters
-  //   BREVO_API_KEY   - or RESEND_API_KEY
-  //   MAIL_FROM       - sender email verified with Brevo/Resend
+  // Secrets are added in the Cloudflare dashboard (Settings > Variables and Secrets), never in this file.
+  // See .env.example for the full list.
 }
