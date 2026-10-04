@@ -1,0 +1,22 @@
+{
+  // Cloudflare Worker that serves the website (./public) and the API (/api/*).
+  "name": "guru-computer-institute",
+  "main": "src/index.js",
+  "compatibility_date": "2025-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  "observability": { "enabled": true },
+  "vars": {
+    "MONGODB_DB": "GuruComputerWebsite",
+    "MAIL_FROM_NAME": "Guru Computer Institute"
+  }
+  // Secrets (set in the Cloudflare dashboard, never in this file):
+  //   MONGODB_URI     - Atlas connection string
+  //   SESSION_SECRET  - long random text, at least 32 characters
+  //   BREVO_API_KEY   - or RESEND_API_KEY
+  //   MAIL_FROM       - sender email verified with Brevo/Resend
+}
