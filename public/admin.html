@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>GCI Admin</title>
+<link rel="icon" href="/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Hind:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#14254a;--saf:#f39232;--grn:#1d8a5b;--red:#c2410c;--bg:#f6f8fb;--card:#fff;--tx:#14254a;--mu:#56627a;--bd:#dde3ed;--ac:#1f4cb5;--icbg:#e9effa;
+--fd:"Bricolage Grotesque","Hind",system-ui,sans-serif;--fb:"Hind",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1626;--card:#162036;--tx:#e8edf7;--mu:#9ba7be;--bd:#27334e;--ac:#86a8ff;--grn:#41c48c;--red:#fb923c;--icbg:#1c2947;color-scheme:dark}}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--fb);font-size:1rem;line-height:1.55;padding-bottom:env(safe-area-inset-bottom,0px)}
+h1,h2,h3{font-family:var(--fd);letter-spacing:-.015em;margin:0;text-wrap:balance}
+a{color:var(--ac)}button,input,select,textarea{font:inherit;color:inherit}
+.top{position:sticky;top:0;z-index:5;background:var(--ink);color:#fff;padding-top:env(safe-area-inset-top,0px)}
+.top .in{max-width:1100px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:14px;min-height:60px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--fd);font-weight:700;color:#fff;text-decoration:none}.brand img{height:34px;background:#fff;border-radius:6px;padding:2px 4px}
+.brand small{font-family:var(--fb);font-weight:500;color:#f7b26b;margin-left:2px}
+nav{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}nav a{color:#c9d4ec;text-decoration:none;padding:8px 12px;border-radius:6px;font-weight:600;font-size:.95rem}
+nav a:hover{background:rgba(255,255,255,.08);color:#fff}nav a.on{color:#fff;box-shadow:inset 0 -2px 0 var(--saf);border-radius:0}
+.who{font-size:.85rem;color:#c9d4ec}.who button{background:none;border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:6px;padding:4px 10px;margin-left:8px;cursor:pointer}
+main{max-width:1100px;margin:0 auto;padding:24px 16px 60px}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:18px}
+.g{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.tile p{margin:0;color:var(--mu);font-size:.9rem}.tile b{display:block;font-family:var(--fd);font-size:1.6rem;margin-top:2px;font-variant-numeric:tabular-nums}
+.sec{margin-top:28px}.sec>h2{font-size:1.3rem;margin-bottom:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;border-radius:9px;padding:10px 16px;font-weight:600;cursor:pointer;background:var(--ink);color:#fff;text-decoration:none;min-height:42px}
+@media (prefers-color-scheme:dark){.btn{background:#e8edf7;color:#0f1626}}
+.btn.or{background:var(--saf);color:#14254a}.btn.o{background:transparent;color:var(--tx);border:1.5px solid var(--bd)}.btn.sm{padding:6px 12px;min-height:34px;font-size:.9rem}
+.btn:disabled{opacity:.55;cursor:wait}.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:3px solid var(--saf);outline-offset:2px}
+label{display:block;font-weight:600;font-size:.9rem;margin-bottom:4px}
+input,select,textarea{width:100%;padding:10px 11px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);min-height:42px}
+.fg{display:grid;gap:12px 14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}.fg .full{grid-column:1/-1}
+fieldset{border:0;padding:0;margin:0 0 22px}legend{font-family:var(--fd);font-weight:700;font-size:1.1rem;margin-bottom:10px;padding:0}
+.hint{color:var(--mu);font-size:.88rem;margin:6px 0 0}
+.msg{margin-top:12px;padding:12px 14px;border-radius:9px;border:1px solid var(--bd);background:var(--bg)}.msg.ok{border-color:var(--grn);background:color-mix(in srgb,var(--grn) 10%,transparent)}.msg.no{border-color:var(--red);background:color-mix(in srgb,var(--red) 9%,transparent)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.tbl{width:100%;border-collapse:collapse;font-size:.95rem}.tbl th{text-align:left;color:var(--mu);font-weight:600;font-size:.85rem;padding:10px 8px;border-bottom:1px solid var(--bd);white-space:nowrap}
+.tbl td{padding:11px 8px;border-bottom:1px solid var(--bd);vertical-align:top}.tbl tr:last-child td{border-bottom:0}.tbl .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:.78rem;font-weight:600;background:var(--icbg);color:var(--ac)}.pill.ok{color:var(--grn);background:color-mix(in srgb,var(--grn) 13%,transparent)}.pill.due{color:var(--red);background:color-mix(in srgb,var(--red) 12%,transparent)}
+.due{color:var(--red);font-weight:600}.paid{color:var(--grn);font-weight:600}
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}.head h1{font-size:1.7rem}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px 18px;margin-top:14px}.kv div{min-width:0}.kv span{display:block;color:var(--mu);font-size:.85rem}.kv b{font-weight:600;overflow-wrap:anywhere}
+.course{margin-top:14px}.course .head h3{font-size:1.1rem}.bar{height:8px;border-radius:99px;background:var(--icbg);overflow:hidden;margin:12px 0 6px}.bar i{display:block;height:100%;background:var(--grn)}
+.panel{margin-top:14px;padding:14px;border:1px dashed var(--bd);border-radius:10px}
+.login{max-width:420px;margin:8vh auto 0}.login h1{font-size:1.6rem;margin-bottom:4px}.login form{display:grid;gap:12px;margin-top:16px}
+.otp{font-family:var(--fd);font-size:1.5rem;letter-spacing:.5em;text-align:center;font-weight:700}
+.empty{color:var(--mu);padding:8px 0}
+.receipt{max-width:640px;margin:0 auto}.receipt .rh{display:flex;align-items:center;gap:14px;border-bottom:2px solid var(--ink);padding-bottom:12px}.receipt .rh img{height:50px}
+.receipt .amt{font-family:var(--fd);font-size:2rem;font-weight:800}
+.noprint{}
+@media print{.top,.noprint{display:none!important}body{background:#fff;color:#000}main{padding:0}.c{border:0;padding:0}.receipt{max-width:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top"><div class="in">
+<a class="brand" href="#home"><img src="/logo.png" alt="">Guru Computer Institute <small>Admin</small></a>
+<nav id="nav" hidden><a href="#home" data-v="home">Home</a><a href="#students" data-v="students">Students</a><a href="#new" data-v="new">New admission</a></nav>
+<div class="who" id="who" hidden></div>
+</div></header>
+<main id="app"><p class="empty">Loading…</p></main>
+
+<script>
+var TK="gci_admin_token",ME=null,COURSES=[],UPLOADS=false;
+var $=function(id){return document.getElementById(id)};
+function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function tk(v){try{if(v===undefined)return localStorage.getItem(TK)||"";v?localStorage.setItem(TK,v):localStorage.removeItem(TK)}catch(e){return ""}}
+function rs(n){return "₹"+Number(n||0).toLocaleString("en-IN")}
+function fd(v){if(!v)return "-";var d=new Date(v);return isNaN(d)?"-":d.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric",timeZone:"Asia/Kolkata"})}
+function today(){return new Date(Date.now()+5.5*3600e3).toISOString().slice(0,10)}
+function api(path,body){var o={method:body?"POST":"GET",headers:{}};if(body){o.headers["Content-Type"]="application/json";o.body=JSON.stringify(body)}
+ if(tk())o.headers.Authorization="Bearer "+tk();
+ return fetch("/api"+path,o).then(function(r){return r.json().catch(function(){return{ok:false,error:"Unexpected reply from the server."}}).then(function(d){d.status=r.status;if(r.status===401&&ME){ME=null;tk("");showLogin("Your session has ended. Please log in again.")}return d})})
+  .catch(function(){return{ok:false,error:"Could not reach the server. Check the internet connection and try again."}})}
+function msg(el,text,kind){el.innerHTML=text?"<div class='msg "+(kind||"")+"'>"+text+"</div>":""}
+function busy(btn,on,label){if(!btn)return;if(on){btn.dataset.l=btn.textContent;btn.disabled=true;btn.textContent=label||"Saving…"}else{btn.disabled=false;btn.textContent=btn.dataset.l||btn.textContent}}
+function waLink(mobile,text){return "https://wa.me/91"+String(mobile||"").replace(/\D/g,"").slice(-10)+"?text="+encodeURIComponent(text)}
+
+// ---------- login ----------
+var LG={id:"",setup:""};
+function showLogin(note,step,extra){$("nav").hidden=true;$("who").hidden=true;step=step||"id";
+ var h="<div class='login c'><h1>Admin login</h1><p class='hint' style='margin:0'>Guru Computer Institute staff only.</p>";
+ if(step==="id")h+="<form id='lf'><div><label for='lid'>Admin ID</label><input id='lid' autocomplete='username' required value='"+esc(LG.id)+"'></div><button class='btn'>Continue</button></form>";
+ if(step==="password")h+="<form id='lf'><p class='hint'>Logging in as <b>"+esc(LG.id)+"</b>. <a href='#' id='lch'>Change</a></p><div><label for='lpw'>Password</label><input id='lpw' type='password' autocomplete='current-password' required></div><button class='btn'>Log in</button><a href='#' id='lfg' class='hint'>Forgot password?</a></form>";
+ if(step==="otp")h+="<form id='lf'><p class='hint'>Code sent to <b>"+esc(extra.sentTo)+"</b>. Valid for 10 minutes.</p><div><label for='lotp'>Verification code</label><input id='lotp' class='otp' inputmode='numeric' autocomplete='one-time-code' maxlength='6' required></div><button class='btn'>Verify code</button><a href='#' id='lch' class='hint'>Start again</a></form>";
+ if(step==="setpw")h+="<form id='lf'><p class='hint'>Create a password for <b>"+esc(LG.id)+"</b>. At least 8 characters with a letter and a number.</p><div><label for='ln1'>New password</label><input id='ln1' type='password' autocomplete='new-password' required></div><div><label for='ln2'>Confirm password</label><input id='ln2' type='password' autocomplete='new-password' required></div><button class='btn or'>Save and log in</button></form>";
+ h+="<div id='lm'></div></div>";$("app").innerHTML=h;if(note)msg($("lm"),esc(note));
+ var f=$("lf"),b=f.querySelector("button");f.querySelector("input").focus();
+ if($("lch"))$("lch").onclick=function(e){e.preventDefault();showLogin("","id")};
+ if($("lfg"))$("lfg").onclick=function(e){e.preventDefault();api("/auth/forgot",{id:LG.id}).then(function(d){d.ok?showLogin("","otp",d):msg($("lm"),esc(d.error),"no")})};
+ f.onsubmit=function(e){e.preventDefault();busy(b,true,"Please wait…");var done=function(){busy(b,false)};
+  if(step==="id"){LG.id=$("lid").value.trim().toUpperCase();api("/auth/start",{id:LG.id}).then(function(d){done();if(!d.ok)return msg($("lm"),esc(d.error),"no");showLogin("",d.next==="password"?"password":"otp",d)})}
+  if(step==="password")api("/auth/login",{id:LG.id,password:$("lpw").value}).then(function(d){done();if(!d.ok)return msg($("lm"),esc(d.error),"no");tk(d.token);boot()});
+  if(step==="otp")api("/auth/verify-otp",{id:LG.id,otp:$("lotp").value}).then(function(d){done();if(!d.ok)return msg($("lm"),esc(d.error),"no");LG.setup=d.setupToken;showLogin("","setpw")});
+  if(step==="setpw"){if($("ln1").value!==$("ln2").value){done();return msg($("lm"),"The two passwords do not match.","no")}
+   api("/auth/set-password",{setupToken:LG.setup,password:$("ln1").value}).then(function(d){done();if(!d.ok)return msg($("lm"),esc(d.error),"no");tk(d.token);boot()})}
+ }}
+
+function boot(){if(!tk())return showLogin();
+ api("/me").then(function(d){if(!d.ok||d.role!=="admin"){tk("");return showLogin(d.ok?"This account is not an admin account.":"")}
+  ME=d;$("nav").hidden=false;$("who").hidden=false;$("who").innerHTML=esc(d.name)+"<button id='lo'>Log out</button>";
+  $("lo").onclick=function(){tk("");ME=null;showLogin("You are logged out.")};
+  api("/admin/courses").then(function(c){COURSES=c.ok?c.courses:[];route()})})}
+
+// ---------- router ----------
+window.onhashchange=function(){if(ME)route()};
+function route(){var h=(location.hash||"#home").slice(1),parts=h.split("/");
+ document.querySelectorAll("nav a").forEach(function(a){a.classList.toggle("on",a.dataset.v===parts[0]||(parts[0]==="student"&&a.dataset.v==="students"))});
+ window.scrollTo(0,0);
+ if(parts[0]==="students")return viewStudents();
+ if(parts[0]==="new")return viewNew();
+ if(parts[0]==="student"&&parts[1])return viewStudent(decodeURIComponent(parts[1]));
+ if(parts[0]==="receipt"&&parts[1])return viewReceipt(decodeURIComponent(parts[1]));
+ viewHome()}
+
+// ---------- home ----------
+var PREFILL=null;
+function viewHome(){$("app").innerHTML="<h1>Today</h1><div id='st' class='g' style='margin-top:14px'><p class='empty'>Loading…</p></div><div class='sec'><h2>Admission requests from the website</h2><div id='rq' class='c'><p class='empty'>Loading…</p></div></div>";
+ api("/admin/stats").then(function(s){if(!s.ok)return msg($("st"),esc(s.error),"no");UPLOADS=s.uploads;
+  $("st").innerHTML=[["Students",s.students.toLocaleString("en-IN")],["Admissions this month",s.admissionsThisMonth],["Fees collected this month",rs(s.collectedThisMonth)],["Pending fees (all students)",rs(s.totalPending)],["New website requests",s.newRequests]].map(function(t){return "<div class='c tile'><p>"+t[0]+"</p><b>"+t[1]+"</b></div>"}).join("")
+   +(s.uploads?"":"<div class='msg' style='grid-column:1/-1'>Document upload is off until Cloudinary keys are added in Cloudflare. Admissions still work without documents.</div>")});
+ loadRequests()}
+function loadRequests(){api("/admin/requests").then(function(d){var el=$("rq");if(!el)return;if(!d.ok)return msg(el,esc(d.error),"no");
+ if(!d.requests.length)return el.innerHTML="<p class='empty'>No new requests.</p>";
+ el.innerHTML="<div class='scroll'><table class='tbl'><thead><tr><th>Received</th><th>Name</th><th>Mobile</th><th>Course</th><th></th></tr></thead><tbody>"+d.requests.map(function(r,i){return "<tr><td>"+fd(r.createdAt)+"</td><td><b>"+esc(r.name)+"</b><br><span class='hint'>Father: "+esc(r.fatherName)+"</span></td><td><a href='tel:+91"+esc(r.mobileNo)+"'>"+esc(r.mobileNo)+"</a></td><td>"+esc(r.course)+(r.batch?"<br><span class='hint'>"+esc(r.batch)+"</span>":"")+"</td><td><div class='row'><button class='btn sm or' data-a='"+i+"'>Admit</button><button class='btn sm o' data-c='"+i+"'>Contacted</button><button class='btn sm o' data-x='"+i+"'>Not interested</button></div></td></tr>"}).join("")+"</tbody></table></div>";
+ el.querySelectorAll("[data-a]").forEach(function(b){b.onclick=function(){PREFILL=d.requests[+b.dataset.a];location.hash="new"}});
+ el.querySelectorAll("[data-c],[data-x]").forEach(function(b){b.onclick=function(){var r=d.requests[+(b.dataset.c||b.dataset.x)];busy(b,true,"…");api("/admin/request/status",{id:r.id,status:b.dataset.c?"Contacted":"Not interested"}).then(loadRequests)}})})}
+
+// ---------- students list ----------
+var SQ={q:"",centre:"",page:1};
+function viewStudents(){$("app").innerHTML="<div class='head'><h1>Students</h1><a class='btn or' href='#new'>New admission</a></div><form id='sf' class='row' style='margin-top:14px'><input id='sq' placeholder='Search by name, ID, mobile or father’s name' style='flex:1;min-width:220px' value='"+esc(SQ.q)+"'><select id='sc' style='width:auto'><option value=''>All centres</option><option value='GCI000'>Head office</option><option value='FRN'>Franchise ID…</option></select><button class='btn'>Search</button></form><div id='sl' class='c' style='margin-top:14px'><p class='empty'>Loading…</p></div>";
+ var sc=$("sc");sc.value=SQ.centre&&SQ.centre!=="GCI000"?"FRN":SQ.centre;
+ sc.onchange=function(){if(sc.value==="FRN"){var f=prompt("Franchise ID, e.g. GCIFRN001");if(f){SQ.centre=f.trim().toUpperCase()}else sc.value=""}else SQ.centre=sc.value};
+ $("sf").onsubmit=function(e){e.preventDefault();SQ.q=$("sq").value.trim();SQ.page=1;loadStudents()};loadStudents()}
+function loadStudents(){var el=$("sl");el.innerHTML="<p class='empty'>Loading…</p>";
+ api("/admin/students?q="+encodeURIComponent(SQ.q)+"&centre="+encodeURIComponent(SQ.centre==="FRN"?"":SQ.centre)+"&page="+SQ.page).then(function(d){if(!d.ok)return msg(el,esc(d.error),"no");
+  if(!d.students.length)return el.innerHTML="<p class='empty'>No students found"+(SQ.q?" for “"+esc(SQ.q)+"”":"")+".</p>";
+  el.innerHTML="<p class='hint' style='margin:0 0 6px'>"+d.total.toLocaleString("en-IN")+" students</p><div class='scroll'><table class='tbl'><thead><tr><th>ID</th><th>Name</th><th>Mobile</th><th>Courses</th><th class='num'>Pending</th></tr></thead><tbody>"+d.students.map(function(s){return "<tr><td><a href='#student/"+encodeURIComponent(s.id)+"'><b>"+esc(s.id)+"</b></a><br><span class='hint'>Roll "+esc(s.rollNo||"-")+"</span></td><td><a href='#student/"+encodeURIComponent(s.id)+"'>"+esc(s.name)+"</a><br><span class='hint'>Father: "+esc(s.fatherName)+(s.centre&&s.centre!=="Guru Computer Institute"?" · "+esc(s.centre):"")+"</span></td><td>"+esc(s.mobileNo)+"</td><td>"+(s.courses.map(esc).join("<br>")||"-")+"</td><td class='num'>"+(s.due?"<span class='due'>"+rs(s.due)+"</span>":"<span class='paid'>Paid</span>")+"</td></tr>"}).join("")+"</tbody></table></div>"
+   +(d.pages>1?"<div class='row' style='margin-top:12px;justify-content:space-between'><button class='btn sm o' id='pp' "+(d.page<=1?"disabled":"")+">Previous</button><span class='hint'>Page "+d.page+" of "+d.pages+"</span><button class='btn sm o' id='pn' "+(d.page>=d.pages?"disabled":"")+">Next</button></div>":"");
+  if($("pp"))$("pp").onclick=function(){SQ.page--;loadStudents()};if($("pn"))$("pn").onclick=function(){SQ.page++;loadStudents()}})}
+
+// ---------- files: shrink photos before upload ----------
+function readFile(f){return new Promise(function(ok,no){if(!f)return ok(null);
+ if(f.type==="application/pdf"){if(f.size>1500000)return no(f.name+": PDF must be under 1.5 MB.");var r=new FileReader();r.onload=function(){ok({mime:f.type,data:String(r.result).split(",")[1]})};r.onerror=function(){no("Could not read "+f.name)};return r.readAsDataURL(f)}
+ if(!/^image\//.test(f.type))return no(f.name+": choose a photo or a PDF.");
+ var im=new Image(),u=URL.createObjectURL(f);im.onload=function(){var k=Math.min(1,1400/Math.max(im.width,im.height)),cv=document.createElement("canvas");cv.width=Math.round(im.width*k);cv.height=Math.round(im.height*k);cv.getContext("2d").drawImage(im,0,0,cv.width,cv.height);URL.revokeObjectURL(u);ok({mime:"image/jpeg",data:cv.toDataURL("image/jpeg",.82).split(",")[1]})};
+ im.onerror=function(){no("Could not read "+f.name)};im.src=u})}
+
+// ---------- new admission ----------
+function courseOptions(sel){return "<option value=''>Choose a course</option>"+COURSES.map(function(c){return "<option value='"+esc(c.id)+"'"+(c.id===sel?" selected":"")+">"+esc(c.name)+" — "+rs(c.price)+(c.duration?", "+esc(c.duration):"")+"</option>"}).join("")}
+function personFields(p){p=p||{};var v=function(k){return esc(p[k]||"")},sel=function(k,opts){return opts.map(function(o){return "<option"+((p[k]||"").toLowerCase()===o.toLowerCase()?" selected":"")+">"+o+"</option>"}).join("")};
+ return "<fieldset><legend>Student</legend><div class='fg'>"
+ +"<div><label for='f_name'>Student’s full name *</label><input id='f_name' required value='"+v("name")+"'></div>"
+ +"<div><label for='f_fatherName'>Father’s name *</label><input id='f_fatherName' required value='"+v("fatherName")+"'></div>"
+ +"<div><label for='f_motherName'>Mother’s name</label><input id='f_motherName' value='"+v("motherName")+"'></div>"
+ +"<div><label for='f_dob'>Date of birth</label><input id='f_dob' type='date' value='"+(p.dob?String(p.dob).slice(0,10):"")+"'></div>"
+ +"<div><label for='f_gender'>Gender</label><select id='f_gender'>"+sel("gender",["Male","Female","Other"])+"</select></div>"
+ +"<div><label for='f_category'>Category</label><select id='f_category'>"+sel("category",["General","OBC","SC","ST","Other"])+"</select></div>"
+ +"<div><label for='f_religion'>Religion</label><input id='f_religion' value='"+v("religion")+"'></div>"
+ +"<div><label for='f_maritalStatus'>Marital status</label><select id='f_maritalStatus'>"+sel("maritalStatus",["Unmarried","Married"])+"</select></div>"
+ +"</div></fieldset><fieldset><legend>Contact and address</legend><div class='fg'>"
+ +"<div><label for='f_mobileNo'>Mobile (WhatsApp) *</label><input id='f_mobileNo' inputmode='tel' maxlength='10' required value='"+v("mobileNo")+"'></div>"
+ +"<div><label for='f_email'>Email</label><input id='f_email' type='email' value='"+v("email")+"'><p class='hint'>Needed for login codes if WhatsApp is not set up.</p></div>"
+ +"<div><label for='f_aadharNo'>Aadhaar number</label><input id='f_aadharNo' inputmode='numeric' maxlength='14' placeholder='"+esc(p.aadharMasked||"12 digits")+"'>"+(p.aadharMasked?"<p class='hint'>Leave empty to keep the saved number.</p>":"")+"</div>"
+ +"<div class='full'><label for='f_address'>Address</label><input id='f_address' value='"+v("address")+"'></div>"
+ +"<div><label for='f_district'>District</label><input id='f_district' value='"+esc(p.district||"Bijnor")+"'></div>"
+ +"<div><label for='f_state'>State</label><input id='f_state' value='"+esc(p.state||"Uttar Pradesh")+"'></div>"
+ +"<div><label for='f_pincode'>Pincode</label><input id='f_pincode' inputmode='numeric' maxlength='6' value='"+v("pincode")+"'></div>"
+ +"</div></fieldset><fieldset><legend>Education</legend><div class='fg'>"
+ +"<div><label for='f_qualification'>Qualification</label><input id='f_qualification' placeholder='e.g. 10th, 12th, B.A.' value='"+v("qualification")+"'></div>"
+ +"<div><label for='f_educationBoard'>Board / university</label><input id='f_educationBoard' value='"+v("educationBoard")+"'></div>"
+ +"<div><label for='f_yearOfPassing'>Year of passing</label><input id='f_yearOfPassing' inputmode='numeric' maxlength='4' value='"+v("yearOfPassing")+"'></div>"
+ +"</div></fieldset>"}
+var PF=["name","fatherName","motherName","dob","gender","category","religion","maritalStatus","mobileNo","email","aadharNo","address","district","state","pincode","qualification","educationBoard","yearOfPassing"];
+function readPerson(){var o={};PF.forEach(function(k){o[k]=$("f_"+k).value.trim()});return o}
+
+function viewNew(){var p=PREFILL||{};PREFILL=null;
+ var pre=p.name?{name:p.name,fatherName:p.fatherName,motherName:p.motherName,mobileNo:p.mobileNo,email:p.email,dob:p.dob,gender:p.gender,qualification:p.qualification,address:p.address}:{};
+ var guess=p.course?(COURSES.filter(function(c){return c.name.toLowerCase()===p.course.toLowerCase()})[0]||{}).id:"";
+ $("app").innerHTML="<h1>New admission</h1>"+(p.name?"<p class='hint'>Filled in from the website request by "+esc(p.name)+(p.course?" for “"+esc(p.course)+"”":"")+". Check the details.</p>":"")
+ +"<form id='af' class='c' style='margin-top:14px'>"+personFields(pre)
+ +"<fieldset><legend>Course and fee</legend><div class='fg'><div class='full'><label for='f_course'>Course *</label><select id='f_course' required>"+courseOptions(guess)+"</select></div>"
+ +"<div><label for='f_discount'>Discount (₹)</label><input id='f_discount' inputmode='numeric' value='0'></div><div><label for='f_reason'>Discount reason</label><input id='f_reason' placeholder='e.g. New Admission Discount'></div>"
+ +"<div><label for='f_date'>Admission date</label><input id='f_date' type='date' value='"+today()+"'></div><div class='full'><p id='fee' class='hint' style='font-size:1rem'></p></div></div></fieldset>"
+ +"<fieldset><legend>Documents</legend>"+(UPLOADS?"":"<p class='hint' style='margin-top:-4px'>Cloudinary is not set up yet, so documents will not be saved. You can still save the admission.</p>")+"<div class='fg'>"
+ +"<div><label for='d_photo'>Student photo</label><input id='d_photo' type='file' accept='image/*'></div><div><label for='d_qualification'>Marksheet / qualification</label><input id='d_qualification' type='file' accept='image/*,application/pdf'></div><div><label for='d_identification'>Aadhaar / ID proof</label><input id='d_identification' type='file' accept='image/*,application/pdf'></div></div></fieldset>"
+ +"<button class='btn or' id='asave'>Save admission</button><div id='am'></div></form>";
+ var upd=function(){var c=COURSES.filter(function(x){return x.id===$("f_course").value})[0],d=Math.max(0,+$("f_discount").value.replace(/\D/g,"")||0);$("fee").innerHTML=c?"Course fee "+rs(c.price)+(d?" − discount "+rs(Math.min(d,c.price)):"")+" = <b>"+rs(Math.max(0,c.price-d))+"</b>":""};
+ $("f_course").onchange=upd;$("f_discount").oninput=upd;upd();
+ var force=false;
+ $("af").onsubmit=function(e){e.preventDefault();var btn=$("asave");busy(btn,true);msg($("am"),"");
+  Promise.all(["photo","qualification","identification"].map(function(k){return readFile($("d_"+k).files[0])})).then(function(files){
+   var body=Object.assign(readPerson(),{courseId:$("f_course").value,discount:$("f_discount").value,discountReason:$("f_reason").value,admissionDate:$("f_date").value,requestId:p.id||"",force:force,
+    documents:{photo:files[0],qualification:files[1],identification:files[2]}});
+   return api("/admin/admission",body)}).then(function(d){busy(btn,false);
+    if(d.status===409&&d.existingId){force=true;return msg($("am"),esc(d.error)+"<div class='row' style='margin-top:10px'><a class='btn sm o' href='#student/"+encodeURIComponent(d.existingId)+"'>Open "+esc(d.existingId)+"</a><span class='hint'>or press Save admission again.</span></div>","no")}
+    if(!d.ok)return msg($("am"),esc(d.error),"no");
+    var name=$("f_name").value,mob=$("f_mobileNo").value,text="Welcome to Guru Computer Institute, "+name+"! Your Enrollment ID is "+d.id+". To see your course, fees and certificates, open our website, go to Student Zone > Student Login, enter this ID and verify with the code we send you.";
+    $("app").innerHTML="<div class='c'><h1>Admission saved</h1><div class='kv'><div><span>Enrollment ID</span><b style='font-size:1.4rem'>"+esc(d.id)+"</b></div><div><span>Roll no.</span><b>"+esc(d.rollNo)+"</b></div><div><span>Fee</span><b>"+rs(d.fee)+"</b></div></div>"
+     +(d.warnings&&d.warnings.length?"<div class='msg'>"+d.warnings.map(esc).join("<br>")+"</div>":"")
+     +"<div class='row' style='margin-top:18px'><a class='btn or' href='#student/"+encodeURIComponent(d.id)+"'>Open student and take fee</a><a class='btn o' target='_blank' rel='noopener' href='"+waLink(mob,text)+"'>Send ID on WhatsApp</a><a class='btn o' href='#new'>Add another</a></div></div>"
+   }).catch(function(err){busy(btn,false);msg($("am"),esc(err),"no")})}}
+
+// ---------- one student ----------
+function viewStudent(id){$("app").innerHTML="<p class='empty'>Loading…</p>";
+ api("/admin/student?id="+encodeURIComponent(id)).then(function(d){if(!d.ok)return msg($("app"),esc(d.error)+" <a href='#students'>Back to students</a>","no");var s=d.student;
+  var docs=[["Photo",s.documents.photo],["Qualification",s.documents.qualification],["ID proof",s.documents.identification]].filter(function(x){return x[1]});
+  var h="<p><a href='#students'>← Students</a></p><div class='c'><div class='head'><div><h1>"+esc(s.name)+"</h1><p class='hint' style='margin:2px 0 0'>"+esc(s.id)+" · Roll "+esc(s.rollNo||"-")+" · "+esc(s.centre)+"</p></div><div class='row'><button class='btn sm o' id='bedit'>Edit details</button><button class='btn sm o' id='badd'>Add course</button></div></div>"
+   +"<div class='kv'><div><span>Father</span><b>"+esc(s.fatherName)+"</b></div><div><span>Mother</span><b>"+esc(s.motherName||"-")+"</b></div><div><span>Mobile</span><b><a href='tel:+91"+esc(s.mobileNo)+"'>"+esc(s.mobileNo||"-")+"</a></b></div><div><span>Email</span><b>"+esc(s.email||"-")+"</b></div><div><span>Date of birth</span><b>"+fd(s.dob)+"</b></div><div><span>Admission date</span><b>"+fd(s.admissionDate)+"</b></div><div><span>Aadhaar</span><b>"+esc(s.aadharMasked||"-")+"</b></div><div><span>Address</span><b>"+esc([s.address,s.district,s.pincode].filter(function(x,i,a){return x&&a.indexOf(x)===i&&!(i>0&&String(a[0]).toLowerCase().indexOf(String(x).toLowerCase())>-1)}).join(", ")||"-")+"</b></div></div>"
+   +(docs.length?"<p style='margin:14px 0 0'><span class='hint'>Documents: </span>"+docs.map(function(x){return "<a target='_blank' rel='noopener' href='"+esc(x[1])+"'>"+x[0]+"</a>"}).join(" · ")+"</p>":"")
+   +"<div id='xpanel'></div></div><div class='sec'><h2>Courses and fees</h2>"
+   +(s.courses.length?s.courses.map(function(c,i){var p=c.total?Math.min(100,Math.round(c.paid/c.total*100)):100;return "<div class='c course'><div class='head'><div><h3>"+esc(c.name)+"</h3><p class='hint' style='margin:2px 0 0'>"+esc(c.duration)+" · joined "+fd(c.enrolledOn)+(c.discount?" · discount "+rs(c.discount)+(c.discountReason?" ("+esc(c.discountReason)+")":""):"")+"</p></div><span class='pill "+(c.status==="Completed"?"ok":"")+"'>"+esc(c.status)+"</span></div>"
+    +"<div class='bar'><i style='width:"+p+"%'></i></div><p style='margin:0'>Paid <b>"+rs(c.paid)+"</b> of "+rs(c.total)+" · "+(c.due?"<span class='due'>"+rs(c.due)+" pending</span>":"<span class='paid'>Fully paid</span>")+"</p>"
+    +"<div class='row' style='margin-top:12px'>"+(c.due?"<button class='btn sm or' data-pay='"+i+"'>Take fee</button>":"")+(c.certificate?"<a class='btn sm o' target='_blank' href='/certificate.html?id="+encodeURIComponent(c.certificate)+"'>Certificate "+esc(c.certificate)+"</a>":"<button class='btn sm o' data-cert='"+i+"'>Issue certificate</button>")+"</div><div id='cp"+i+"'></div></div>"}).join(""):"<div class='c'><p class='empty'>No courses yet. Use “Add course”.</p></div>")
+   +"</div><div class='sec'><h2>Fee receipts</h2><div class='c'>"+(s.receipts.length?"<div class='scroll'><table class='tbl'><thead><tr><th>Receipt</th><th>Date</th><th>Course</th><th>Mode</th><th class='num'>Amount</th><th></th></tr></thead><tbody>"+s.receipts.map(function(r){return "<tr><td><b>"+esc(r.receiptNo)+"</b></td><td>"+fd(r.date)+"</td><td>"+esc(r.course)+"</td><td>"+esc(r.mode)+"</td><td class='num'>"+rs(r.amount)+"</td><td><a href='#receipt/"+encodeURIComponent(r.receiptNo)+"'>Print</a></td></tr>"}).join("")+"</tbody></table></div>":"<p class='empty'>No payments yet.</p>")+"</div></div>"
+   +"<div class='sec'><h2>Certificates</h2><div class='c'>"+(s.certificates.length?s.certificates.map(function(c){return "<p style='margin:0 0 8px'><b>"+esc(c.certificateId)+"</b> · "+esc(c.course)+" · "+fd(c.issueDate)+" · <a target='_blank' href='/certificate.html?id="+encodeURIComponent(c.certificateId)+"'>Open</a>"+(c.pdf?" · <a target='_blank' rel='noopener' href='"+esc(c.pdf)+"'>Old PDF</a>":"")+"</p>"}).join(""):"<p class='empty'>No certificates yet.</p>")+"</div></div>";
+  $("app").innerHTML=h;
+  document.querySelectorAll("[data-pay]").forEach(function(b){b.onclick=function(){payForm(s,s.courses[+b.dataset.pay],$("cp"+b.dataset.pay))}});
+  document.querySelectorAll("[data-cert]").forEach(function(b){b.onclick=function(){certForm(s,s.courses[+b.dataset.cert],$("cp"+b.dataset.cert))}});
+  $("bedit").onclick=function(){editForm(s)};$("badd").onclick=function(){addCourseForm(s)}})}
+
+function payForm(s,c,el){el.innerHTML="<form class='panel' id='pf'><div class='fg'><div><label for='p_amt'>Amount received (₹) *</label><input id='p_amt' inputmode='numeric' required value='"+c.due+"'><p class='hint'>Pending: "+rs(c.due)+"</p></div>"
+ +"<div><label for='p_mode'>Paid by *</label><select id='p_mode'><option>Cash</option><option>UPI</option><option>Bank Transfer</option><option>Card</option><option>Cheque</option></select></div>"
+ +"<div><label for='p_tx'>Transaction / UPI ref.</label><input id='p_tx'></div><div><label for='p_date'>Date</label><input id='p_date' type='date' value='"+today()+"'></div>"
+ +"<div><label for='p_payer'>Paid by (name)</label><input id='p_payer' value='"+esc(s.name)+"'></div><div><label for='p_notes'>Note</label><input id='p_notes' placeholder='e.g. Second instalment'></div></div>"
+ +"<div class='row' style='margin-top:12px'><button class='btn or' id='psave'>Save payment</button><button type='button' class='btn o' id='pcancel'>Cancel</button></div><div id='pm'></div></form>";
+ $("pcancel").onclick=function(){el.innerHTML=""};$("p_amt").focus();
+ $("pf").onsubmit=function(e){e.preventDefault();var b=$("psave");busy(b,true);
+  api("/admin/payment",{studentId:s.id,courseId:c.id,amount:$("p_amt").value,mode:$("p_mode").value,transactionId:$("p_tx").value,paymentDate:$("p_date").value,payerName:$("p_payer").value,notes:$("p_notes").value}).then(function(d){busy(b,false);
+   if(!d.ok)return msg($("pm"),esc(d.error),"no");
+   var text="Guru Computer Institute: received "+rs($("p_amt").value)+" for "+c.name+" from "+s.name+" ("+s.id+"). Receipt "+d.receiptNo+". "+(d.due?"Pending: "+rs(d.due)+".":"Course fee fully paid. Thank you!");
+   el.innerHTML="<div class='msg ok'>Payment saved. Receipt <b>"+esc(d.receiptNo)+"</b>. "+(d.due?"Still pending: "+rs(d.due)+".":"Course fee fully paid.")+"<div class='row' style='margin-top:10px'><a class='btn sm' href='#receipt/"+encodeURIComponent(d.receiptNo)+"'>Print receipt</a><a class='btn sm o' target='_blank' rel='noopener' href='"+waLink(s.mobileNo,text)+"'>Send on WhatsApp</a><button class='btn sm o' id='prl'>Refresh</button></div></div>";
+   $("prl").onclick=function(){viewStudent(s.id)}})}}
+
+function certForm(s,c,el,force){el.innerHTML="<form class='panel' id='cf'><div class='fg'><div><label for='c_date'>Issue date</label><input id='c_date' type='date' value='"+today()+"'></div><div><label for='c_grade'>Grade (optional)</label><input id='c_grade' maxlength='10' placeholder='e.g. A'></div></div>"
+ +"<div class='row' style='margin-top:12px'><button class='btn or' id='csave'>Issue certificate</button><button type='button' class='btn o' id='ccancel'>Cancel</button></div><div id='cm'></div></form>";
+ $("ccancel").onclick=function(){el.innerHTML=""};var f=false;
+ $("cf").onsubmit=function(e){e.preventDefault();var b=$("csave");busy(b,true,"Issuing…");
+  api("/admin/certificate",{studentId:s.id,courseId:c.id,issueDate:$("c_date").value,grade:$("c_grade").value,force:f}).then(function(d){busy(b,false);
+   if(d.status===409&&d.due){f=true;b.textContent="Issue anyway";return msg($("cm"),esc(d.error),"no")}
+   if(!d.ok)return msg($("cm"),esc(d.error),"no");
+   var link=location.origin+"/certificate.html?id="+encodeURIComponent(d.certificateId);
+   el.innerHTML="<div class='msg ok'>Certificate <b>"+esc(d.certificateId)+"</b> issued. Course marked Completed.<div class='row' style='margin-top:10px'><a class='btn sm' target='_blank' href='"+link+"'>Open and print</a><a class='btn sm o' target='_blank' rel='noopener' href='"+waLink(s.mobileNo,"Congratulations "+s.name+"! Your certificate for "+c.name+" from Guru Computer Institute is ready. Certificate no. "+d.certificateId+". View: "+link)+"'>Send on WhatsApp</a><button class='btn sm o' id='crl'>Refresh</button></div></div>";
+   $("crl").onclick=function(){viewStudent(s.id)}})}}
+
+function addCourseForm(s){var el=$("xpanel");el.innerHTML="<form class='panel' id='ef'><div class='fg'><div class='full'><label for='e_course'>Course *</label><select id='e_course' required>"+courseOptions("")+"</select></div><div><label for='e_disc'>Discount (₹)</label><input id='e_disc' inputmode='numeric' value='0'></div><div><label for='e_reason'>Discount reason</label><input id='e_reason'></div><div><label for='e_date'>Start date</label><input id='e_date' type='date' value='"+today()+"'></div></div><div class='row' style='margin-top:12px'><button class='btn or' id='esave'>Add course</button><button type='button' class='btn o' id='ecancel'>Cancel</button></div><div id='em'></div></form>";
+ $("ecancel").onclick=function(){el.innerHTML=""};
+ $("ef").onsubmit=function(e){e.preventDefault();var b=$("esave");busy(b,true);api("/admin/enroll",{id:s.id,courseId:$("e_course").value,discount:$("e_disc").value,discountReason:$("e_reason").value,date:$("e_date").value}).then(function(d){busy(b,false);if(!d.ok)return msg($("em"),esc(d.error),"no");viewStudent(s.id)})}}
+
+function editForm(s){var el=$("xpanel");el.innerHTML="<form class='panel' id='uf'>"+personFields(s)+"<div class='row'><button class='btn or' id='usave'>Save changes</button><button type='button' class='btn o' id='ucancel'>Cancel</button></div><div id='um'></div></form>";
+ $("ucancel").onclick=function(){el.innerHTML=""};el.scrollIntoView({behavior:"smooth"});
+ $("uf").onsubmit=function(e){e.preventDefault();var b=$("usave");busy(b,true);api("/admin/student/update",Object.assign(readPerson(),{id:s.id})).then(function(d){busy(b,false);if(!d.ok)return msg($("um"),esc(d.error),"no");viewStudent(s.id)})}}
+
+// ---------- printable receipt ----------
+function viewReceipt(no){$("app").innerHTML="<p class='empty'>Loading…</p>";
+ api("/admin/receipt?id="+encodeURIComponent(no)).then(function(d){if(!d.ok)return msg($("app"),esc(d.error),"no");var r=d.receipt;
+  $("app").innerHTML="<div class='noprint row' style='margin-bottom:14px'><a href='#student/"+encodeURIComponent(r.studentId)+"'>← Back to student</a><button class='btn sm' onclick='print()'>Print</button></div>"
+  +"<div class='c receipt'><div class='rh'><img src='/logo.png' alt=''><div><h2>Guru Computer Institute</h2><p class='hint' style='margin:0'>Gurudwara Road, Opposite Diwakar Hospital, Raja Ka Tajpur, Bijnor · +91 93898 24310</p></div></div>"
+  +"<h3 style='margin:16px 0 4px'>Fee receipt</h3><div class='kv'><div><span>Receipt no.</span><b>"+esc(r.receiptNo)+"</b></div><div><span>Date</span><b>"+fd(r.date)+"</b></div><div><span>Student</span><b>"+esc(r.studentName)+" ("+esc(r.studentId)+")</b></div><div><span>Course</span><b>"+esc(r.course)+"</b></div><div><span>Paid by</span><b>"+esc(r.payerName)+"</b></div><div><span>Mode</span><b>"+esc(r.mode)+(r.transactionId?" · "+esc(r.transactionId):"")+"</b></div></div>"
+  +"<p style='margin:18px 0 0' class='hint'>Amount received</p><p class='amt' style='margin:0'>"+rs(r.amount)+"</p>"
+  +(r.courseTotal!=null?"<p class='hint'>Course fee "+rs(r.courseTotal)+" · pending after all payments: "+rs(r.courseDue)+"</p>":"")+(r.notes?"<p class='hint'>Note: "+esc(r.notes)+"</p>":"")
+  +"<div class='row' style='justify-content:space-between;margin-top:40px'><span class='hint'>Received by: "+esc(r.receivedBy)+"</span><span class='hint'>Signature ____________________</span></div></div>"})}
+
+boot();
+</script>
+</body>
+</html>
