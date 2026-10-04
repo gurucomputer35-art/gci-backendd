@@ -152,11 +152,18 @@ async function sha1Hex(text) {
 }
 
 // file = { mime: "image/jpeg" | "image/png" | "application/pdf", data: base64 }
-export async function uploadPrivate(env, file, folder, publicId) {
+// Private upload: student and franchise documents. The returned link carries a signature.
+export const uploadPrivate = (env, file, folder, publicId) =>
+  cloudUpload(env, file, folder, publicId, "authenticated", ["image/jpeg", "image/png", "application/pdf"], "Only JPG, PNG or PDF files can be uploaded.");
+// Public upload: pictures meant for the website (course images).
+export const uploadPublicImage = (env, file, folder, publicId) =>
+  cloudUpload(env, file, folder, publicId, "upload", ["image/jpeg", "image/png", "image/webp"], "Only JPG, PNG or WebP pictures can be used.");
+
+async function cloudUpload(env, file, folder, publicId, type, kinds, kindError) {
   if (!file || !file.data) return "";
-  if (!["image/jpeg", "image/png", "application/pdf"].includes(file.mime)) throw new Error("Only JPG, PNG or PDF files can be uploaded.");
+  if (!kinds.includes(file.mime) || typeof file.data !== "string") throw new Error(kindError);
   if (file.data.length > 4_000_000) throw new Error("Each file must be under 3 MB.");
-  const params = { folder, overwrite: "true", public_id: publicId, timestamp: String(Math.floor(Date.now() / 1000)), type: "authenticated" };
+  const params = { folder, invalidate: "true", overwrite: "true", public_id: publicId, timestamp: String(Math.floor(Date.now() / 1000)), type };
   const toSign = Object.keys(params).sort().map((k) => `${k}=${params[k]}`).join("&");
   const form = new FormData();
   for (const [k, v] of Object.entries(params)) form.append(k, v);
@@ -166,8 +173,10 @@ export async function uploadPrivate(env, file, folder, publicId) {
   const res = await fetch(`https://api.cloudinary.com/v1_1/${env.CLOUDINARY_CLOUD_NAME}/image/upload`, { method: "POST", body: form });
   const out = await res.json().catch(() => ({}));
   if (!res.ok || !out.secure_url) throw new Error(`Upload failed: ${out.error?.message || res.status}`);
-  return out.secure_url;   // signed URL, opens only with the signature it contains
+  return out.secure_url;
 }
+// Only links to our own Cloudinary files are ever shown on the website.
+export const cloudUrl = (u) => (/^https:\/\/res\.cloudinary\.com\//.test(String(u || "")) ? String(u) : "");
 
 export function randomCode(len = 6) {
   const abc = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";   // no 0/O/1/I, easier to read on paper
@@ -176,6 +185,15 @@ export function randomCode(len = 6) {
 }
 export const hex24 = () => [...crypto.getRandomValues(new Uint8Array(12))].map((b) => b.toString(16).padStart(2, "0")).join("");
 export const escapeRegex = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+// ---------- form validation (server side; the website checks the same rules first) ----------
+export const isName = (v) => /^[\p{L}][\p{L}\p{M} .'-]{1,99}$/u.test(String(v || "").trim());
+export const isEmail = (v) => /^[^@\s]{1,64}@[^@\s]+\.[^@\s]{2,}$/.test(String(v || "").trim()) && String(v).length <= 150;
+export const isPincode = (v) => /^[1-9]\d{5}$/.test(String(v || "").trim());
+export function slugify(s) {
+  return String(s || "").toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g, "").replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80) || "course";
+}
 
 // ---------- small utilities ----------
 export function escapeHtml(v) {
