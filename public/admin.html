@@ -51,32 +51,36 @@ fieldset{border:0;padding:0;margin:0 0 22px}legend{font-family:var(--fd);font-we
 .login{max-width:420px;margin:8vh auto 0}.login h1{font-size:1.6rem;margin-bottom:4px}.login form{display:grid;gap:12px;margin-top:16px}
 .otp{font-family:var(--fd);font-size:1.5rem;letter-spacing:.5em;text-align:center;font-weight:700}
 .empty{color:var(--mu);padding:8px 0}
+.ck2{display:flex;gap:8px;align-items:center;font-weight:600;margin-top:28px}.ck2 input{width:auto;min-height:0}
+a.tile{text-decoration:none;color:inherit}a.tile:hover{border-color:var(--ac)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+@media(max-width:640px){.tbl thead{display:none}.tbl,.tbl tbody,.tbl tr,.tbl td{display:block}.tbl tr{padding:10px 0;border-bottom:1px solid var(--bd)}.tbl tr:last-child{border-bottom:0}.tbl td{border:0;padding:3px 0}.tbl .num{text-align:left}}
 .receipt{max-width:640px;margin:0 auto}.receipt .rh{display:flex;align-items:center;gap:14px;border-bottom:2px solid var(--ink);padding-bottom:12px}.receipt .rh img{height:50px}
 .receipt .amt{font-family:var(--fd);font-size:2rem;font-weight:800}
 .noprint{}
 @media print{.top,.noprint{display:none!important}body{background:#fff;color:#000}main{padding:0}.c{border:0;padding:0}.receipt{max-width:none}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.cimgbox{max-width:420px;aspect-ratio:16/9;border:1px dashed #cbd5e1;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#f8fafc;color:#64748b;font-size:.9rem;text-align:center;padding:0}.cimgbox span{padding:12px}.cimgbox img{width:100%;height:100%;object-fit:cover;display:block}
 </style>
 </head>
 <body>
 <header class="top"><div class="in">
 <a class="brand" href="#home"><img src="/logo.png" alt="">Guru Computer Institute <small>Admin</small></a>
-<nav id="nav" hidden><a href="#home" data-v="home">Home</a><a href="#students" data-v="students">Students</a><a href="#new" data-v="new">New admission</a></nav>
+<nav id="nav" aria-label="Admin" hidden><a href="#home" data-v="home">Home</a><a href="#students" data-v="students">Students</a><a href="#new" data-v="new">New admission</a><a href="#courses" data-v="courses">Courses</a><a href="#enquiries" data-v="enquiries">Enquiries</a><a href="#franchises" data-v="franchises">Franchises</a><a href="#settings" data-v="settings">Settings</a></nav>
 <div class="who" id="who" hidden></div>
 </div></header>
 <main id="app"><p class="empty">Loading…</p></main>
 
 <script>
-var TK="gci_admin_token",ME=null,COURSES=[],UPLOADS=false;
+var ME=null,COURSES=[],UPLOADS=false;
 var $=function(id){return document.getElementById(id)};
 function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
-function tk(v){try{if(v===undefined)return localStorage.getItem(TK)||"";v?localStorage.setItem(TK,v):localStorage.removeItem(TK)}catch(e){return ""}}
 function rs(n){return "₹"+Number(n||0).toLocaleString("en-IN")}
 function fd(v){if(!v)return "-";var d=new Date(v);return isNaN(d)?"-":d.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric",timeZone:"Asia/Kolkata"})}
 function today(){return new Date(Date.now()+5.5*3600e3).toISOString().slice(0,10)}
-function api(path,body){var o={method:body?"POST":"GET",headers:{}};if(body){o.headers["Content-Type"]="application/json";o.body=JSON.stringify(body)}
- if(tk())o.headers.Authorization="Bearer "+tk();
- return fetch("/api"+path,o).then(function(r){return r.json().catch(function(){return{ok:false,error:"Unexpected reply from the server."}}).then(function(d){d.status=r.status;if(r.status===401&&ME){ME=null;tk("");showLogin("Your session has ended. Please log in again.")}return d})})
+// The login session is an HttpOnly cookie set by the server; this page never sees or stores it.
+function api(path,body){var o={method:body?"POST":"GET",headers:{Accept:"application/json"},credentials:"same-origin"};if(body){o.headers["Content-Type"]="application/json";o.body=JSON.stringify(body)}
+ return fetch("/api"+path,o).then(function(r){return r.json().catch(function(){return{ok:false,error:"Unexpected reply from the server."}}).then(function(d){d.status=r.status;if(r.status===401&&ME){ME=null;showLogin("Your session has ended. Please log in again.")}return d})})
   .catch(function(){return{ok:false,error:"Could not reach the server. Check the internet connection and try again."}})}
 function msg(el,text,kind){el.innerHTML=text?"<div class='msg "+(kind||"")+"'>"+text+"</div>":""}
 function busy(btn,on,label){if(!btn)return;if(on){btn.dataset.l=btn.textContent;btn.disabled=true;btn.textContent=label||"Saving…"}else{btn.disabled=false;btn.textContent=btn.dataset.l||btn.textContent}}
@@ -96,34 +100,41 @@ function showLogin(note,step,extra){$("nav").hidden=true;$("who").hidden=true;st
  if($("lfg"))$("lfg").onclick=function(e){e.preventDefault();api("/auth/forgot",{id:LG.id}).then(function(d){d.ok?showLogin("","otp",d):msg($("lm"),esc(d.error),"no")})};
  f.onsubmit=function(e){e.preventDefault();busy(b,true,"Please wait…");var done=function(){busy(b,false)};
   if(step==="id"){LG.id=$("lid").value.trim().toUpperCase();api("/auth/start",{id:LG.id}).then(function(d){done();if(!d.ok)return msg($("lm"),esc(d.error),"no");showLogin("",d.next==="password"?"password":"otp",d)})}
-  if(step==="password")api("/auth/login",{id:LG.id,password:$("lpw").value}).then(function(d){done();if(!d.ok)return msg($("lm"),esc(d.error),"no");tk(d.token);boot()});
+  if(step==="password")api("/auth/login",{id:LG.id,password:$("lpw").value}).then(function(d){done();if(!d.ok)return msg($("lm"),esc(d.error),"no");boot()});
   if(step==="otp")api("/auth/verify-otp",{id:LG.id,otp:$("lotp").value}).then(function(d){done();if(!d.ok)return msg($("lm"),esc(d.error),"no");LG.setup=d.setupToken;showLogin("","setpw")});
   if(step==="setpw"){if($("ln1").value!==$("ln2").value){done();return msg($("lm"),"The two passwords do not match.","no")}
-   api("/auth/set-password",{setupToken:LG.setup,password:$("ln1").value}).then(function(d){done();if(!d.ok)return msg($("lm"),esc(d.error),"no");tk(d.token);boot()})}
+   api("/auth/set-password",{setupToken:LG.setup,password:$("ln1").value}).then(function(d){done();if(!d.ok)return msg($("lm"),esc(d.error),"no");boot()})}
  }}
 
-function boot(){if(!tk())return showLogin();
- api("/me").then(function(d){if(!d.ok||d.role!=="admin"){tk("");return showLogin(d.ok?"This account is not an admin account.":"")}
+function boot(){
+ api("/me").then(function(d){if(!d.ok)return showLogin(d.status&&d.status!==401?d.error:"");
+  if(d.role!=="admin"){$("app").innerHTML="<div class='login c'><h1>Admin only</h1><p>You are logged in as "+esc(d.name||d.id)+", which is not an admin account.</p><p class='row'><a class='btn' href='/dashboard'>Go to my dashboard</a><button class='btn o' id='swap'>Log in as admin</button></p></div>";
+   $("swap").onclick=function(){api("/auth/logout",{}).then(function(){showLogin()})};return}
   ME=d;$("nav").hidden=false;$("who").hidden=false;$("who").innerHTML=esc(d.name)+"<button id='lo'>Log out</button>";
-  $("lo").onclick=function(){tk("");ME=null;showLogin("You are logged out.")};
+  $("lo").onclick=function(){this.disabled=true;api("/auth/logout",{}).then(function(){ME=null;showLogin("You are logged out.")})};
   api("/admin/courses").then(function(c){COURSES=c.ok?c.courses:[];route()})})}
 
 // ---------- router ----------
 window.onhashchange=function(){if(ME)route()};
 function route(){var h=(location.hash||"#home").slice(1),parts=h.split("/");
- document.querySelectorAll("nav a").forEach(function(a){a.classList.toggle("on",a.dataset.v===parts[0]||(parts[0]==="student"&&a.dataset.v==="students"))});
+ document.querySelectorAll("nav a").forEach(function(a){var on=a.dataset.v===parts[0]||(parts[0]==="student"&&a.dataset.v==="students")||(parts[0]==="course"&&a.dataset.v==="courses");a.classList.toggle("on",on);if(on)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
  window.scrollTo(0,0);
  if(parts[0]==="students")return viewStudents();
  if(parts[0]==="new")return viewNew();
  if(parts[0]==="student"&&parts[1])return viewStudent(decodeURIComponent(parts[1]));
  if(parts[0]==="receipt"&&parts[1])return viewReceipt(decodeURIComponent(parts[1]));
+ if(parts[0]==="courses")return viewCourses();
+ if(parts[0]==="course"&&parts[1])return viewCourseEdit(decodeURIComponent(parts[1]));
+ if(parts[0]==="enquiries")return viewEnquiries(parts[1]||"contact");
+ if(parts[0]==="franchises")return viewFranchises();
+ if(parts[0]==="settings")return viewSettings();
  viewHome()}
 
 // ---------- home ----------
 var PREFILL=null;
 function viewHome(){$("app").innerHTML="<h1>Today</h1><div id='st' class='g' style='margin-top:14px'><p class='empty'>Loading…</p></div><div class='sec'><h2>Admission requests from the website</h2><div id='rq' class='c'><p class='empty'>Loading…</p></div></div>";
  api("/admin/stats").then(function(s){if(!s.ok)return msg($("st"),esc(s.error),"no");UPLOADS=s.uploads;
-  $("st").innerHTML=[["Students",s.students.toLocaleString("en-IN")],["Admissions this month",s.admissionsThisMonth],["Fees collected this month",rs(s.collectedThisMonth)],["Pending fees (all students)",rs(s.totalPending)],["New website requests",s.newRequests]].map(function(t){return "<div class='c tile'><p>"+t[0]+"</p><b>"+t[1]+"</b></div>"}).join("")
+  $("st").innerHTML=[["Students",s.students.toLocaleString("en-IN")],["Admissions this month",s.admissionsThisMonth],["Fees collected this month",rs(s.collectedThisMonth)],["Pending fees (all students)",rs(s.totalPending)],["Admission requests",s.newRequests,"#home"],["New enquiries",s.newEnquiries,"#enquiries/contact"],["Franchise enquiries",s.newFranchiseEnquiries,"#enquiries/franchise"],["New feedback",s.newFeedback,"#enquiries/feedback"]].map(function(t){return t[2]?"<a class='c tile lk' href='"+t[2]+"'><p>"+t[0]+"</p><b>"+t[1]+"</b></a>":"<div class='c tile'><p>"+t[0]+"</p><b>"+t[1]+"</b></div>"}).join("")
    +(s.uploads?"":"<div class='msg' style='grid-column:1/-1'>Document upload is off until Cloudinary keys are added in Cloudflare. Admissions still work without documents.</div>")});
  loadRequests()}
 function loadRequests(){api("/admin/requests").then(function(d){var el=$("rq");if(!el)return;if(!d.ok)return msg(el,esc(d.error),"no");
@@ -266,6 +277,88 @@ function viewReceipt(no){$("app").innerHTML="<p class='empty'>Loading…</p>";
   +"<p style='margin:18px 0 0' class='hint'>Amount received</p><p class='amt' style='margin:0'>"+rs(r.amount)+"</p>"
   +(r.courseTotal!=null?"<p class='hint'>Course fee "+rs(r.courseTotal)+" · pending after all payments: "+rs(r.courseDue)+"</p>":"")+(r.notes?"<p class='hint'>Note: "+esc(r.notes)+"</p>":"")
   +"<div class='row' style='justify-content:space-between;margin-top:40px'><span class='hint'>Received by: "+esc(r.receivedBy)+"</span><span class='hint'>Signature ____________________</span></div></div>"})}
+
+// ---------- courses: add, edit, hide ----------
+function viewCourses(){$("app").innerHTML="<div class='head'><h1>Courses</h1><a class='btn or' href='#course/new'>Add course</a></div><p class='hint'>Courses shown on the website come from here. Hidden courses stay in old student records but are not shown to visitors.</p><div id='cls' class='c' style='margin-top:14px'><p class='empty'>Loading…</p></div>";
+ api("/admin/courses").then(function(d){var el=$("cls");if(!d.ok)return msg(el,esc(d.error),"no");COURSES=d.courses;
+  if(!d.courses.length)return el.innerHTML="<p class='empty'>No courses yet. Use “Add course”.</p>";
+  el.innerHTML="<div class='scroll'><table class='tbl'><thead><tr><th>Course</th><th class='num'>Fee</th><th>Duration</th><th>On website</th><th></th></tr></thead><tbody>"+d.courses.map(function(c){return "<tr><td><b>"+esc(c.name)+"</b>"+(c.top?" <span class='pill ok'>Recommended</span>":"")+"</td><td class='num'>"+(c.price?rs(c.price):"Free")+"</td><td>"+esc(c.duration||"-")+"</td><td>"+(c.public?"<span class='pill ok'>Shown</span>":"<span class='pill due'>Hidden</span>")+"</td><td><a href='#course/"+encodeURIComponent(c.id)+"'>Edit</a></td></tr>"}).join("")+"</tbody></table></div>"})}
+var FLASH="";
+function viewCourseEdit(id){var isNew=id==="new";$("app").innerHTML="<p><a href='#courses'>← Courses</a></p><h1>"+(isNew?"Add course":"Edit course")+"</h1><div id='cfw'><p class='empty'>Loading…</p></div>";
+ var draw=function(c){c=c||{durationType:"Month",type:"Certificate",level:"Beginner",language:"English & Hindi",visible:true,syllabus:[]};
+  var sel=function(v,opts){return opts.map(function(o){return "<option"+(o===v?" selected":"")+">"+o+"</option>"}).join("")};
+  $("cfw").innerHTML="<form id='cef' class='c' style='margin-top:14px' novalidate><fieldset><legend>Course</legend><div class='fg'>"
+  +"<div class='full'><label for='c_name'>Course name *</label><input id='c_name' name='name' required maxlength='150' value='"+esc(c.name||"")+"'></div>"
+  +"<div><label for='c_price'>Fee (₹) *</label><input id='c_price' name='price' inputmode='numeric' value='"+esc(c.price||"")+"'></div>"
+  +"<div><label class='ck2'><input type='checkbox' id='c_free'"+(c.isFree?" checked":"")+"> Free course</label></div>"
+  +"<div><label for='c_dv'>Duration *</label><input id='c_dv' name='durationValue' inputmode='numeric' maxlength='2' value='"+esc(c.durationValue||"")+"'></div>"
+  +"<div><label for='c_dt'>Duration unit</label><select id='c_dt'>"+sel(c.durationType,["Day","Week","Month","Year"])+"</select></div>"
+  +"<div><label for='c_type'>Type</label><select id='c_type'>"+sel(c.type,["Diploma","Certificate","Short Course"])+"</select></div>"
+  +"<div><label for='c_cat'>Category</label><input id='c_cat' value='"+esc(c.category||"")+"' placeholder='e.g. Accounting'></div>"
+  +"<div><label for='c_level'>Level</label><input id='c_level' value='"+esc(c.level||"")+"'></div>"
+  +"<div><label for='c_lang'>Language</label><input id='c_lang' value='"+esc(c.language||"")+"'></div>"
+  +"</div></fieldset><fieldset><legend>Course picture</legend><div class='fg'>"
+  +"<div class='full'><div class='cimgbox' id='c_prev'>"+(c.image?"<img src='"+esc(c.image)+"' alt='Current picture of this course'>":"<span>No picture yet. The course shows an icon instead.</span>")+"</div></div>"
+  +"<div class='full'><label for='c_img'>"+(c.image?"Change picture":"Add a picture")+"</label><input type='file' id='c_img' accept='image/jpeg,image/png,image/webp'>"
+  +"<p class='hint'>A wide photo looks best (for example 1200 × 675). JPG, PNG or WebP. Large photos are made smaller automatically.</p>"
+  +(c.canUpload===false?"<p class='hint' style='color:#b45309'>Picture upload needs the Cloudinary keys in Cloudflare. Other details still save.</p>":"")+"</div>"
+  +(c.image?"<div><label class='ck2'><input type='checkbox' id='c_rmimg'> Remove picture</label></div>":"")
+  +"</div></fieldset><fieldset><legend>Shown on the course page</legend><div class='fg'>"
+  +"<div class='full'><label for='c_desc'>Short description</label><input id='c_desc' maxlength='400' value='"+esc(c.description||"")+"'><p class='hint'>One or two sentences. Also used by Google.</p></div>"
+  +"<div class='full'><label for='c_long'>Full description</label><textarea id='c_long' rows='5' maxlength='5000'>"+esc(c.longDescription||"")+"</textarea></div>"
+  +"<div class='full'><label for='c_syl'>Syllabus (one topic per line)</label><textarea id='c_syl' rows='6'>"+esc((c.syllabus||[]).join("\n"))+"</textarea></div>"
+  +"<div class='full'><label for='c_el'>Eligibility</label><input id='c_el' maxlength='300' value='"+esc(c.eligibility||"")+"' placeholder='e.g. 10th pass'></div>"
+  +"<div class='full'><label for='c_job'>Career options</label><input id='c_job' maxlength='400' value='"+esc(c.careerScope||"")+"' placeholder='e.g. Accountant, billing executive'></div>"
+  +"<div><label class='ck2'><input type='checkbox' id='c_top'"+(c.isTopCourse?" checked":"")+"> Recommended on the homepage</label></div>"
+  +"<div><label class='ck2'><input type='checkbox' id='c_vis'"+(c.visible!==false?" checked":"")+"> Show on the website</label></div>"
+  +"</div></fieldset><button class='btn or' id='csave2'>"+(isNew?"Add course":"Save changes")+"</button><div id='cem'></div></form>";
+  if(FLASH){msg($("cem"),FLASH,"ok");FLASH=""}
+  $("c_img").onchange=function(){var f=this.files[0];if(!f)return;if(!/^image\/(jpeg|png|webp)$/.test(f.type)){this.value="";return msg($("cem"),"Choose a JPG, PNG or WebP picture.","no")}
+   var u=URL.createObjectURL(f);$("c_prev").innerHTML="<img src='"+u+"' alt='New picture, not saved yet'>";if($("c_rmimg"))$("c_rmimg").checked=false};
+  if($("c_rmimg"))$("c_rmimg").onchange=function(){if(this.checked){$("c_img").value="";$("c_prev").innerHTML="<span>The picture will be removed when you save.</span>"}};
+  $("cef").onsubmit=function(e){e.preventDefault();var b=$("csave2");var body={id:isNew?"":id,name:$("c_name").value,price:$("c_price").value,isFree:$("c_free").checked,durationValue:$("c_dv").value,durationType:$("c_dt").value,type:$("c_type").value,category:$("c_cat").value,level:$("c_level").value,language:$("c_lang").value,description:$("c_desc").value,longDescription:$("c_long").value,syllabus:$("c_syl").value,eligibility:$("c_el").value,careerScope:$("c_job").value,isTopCourse:$("c_top").checked,visible:$("c_vis").checked};
+   if(body.name.trim().length<3)return msg($("cem"),"Enter the course name.","no");if(!body.isFree&&!(+body.price>0))return msg($("cem"),"Enter the course fee, or tick Free course.","no");if(!(+body.durationValue>0))return msg($("cem"),"Enter the duration as a number, for example 6.","no");
+   if($("c_rmimg")&&$("c_rmimg").checked)body.removeImage=true;
+   busy(b,true);readFile($("c_img").files[0]).then(function(img){if(img)body.image=img;return api("/admin/course/save",body)},function(err){return {ok:false,error:String(err)}}).then(function(d){busy(b,false);if(!d.ok)return msg($("cem"),esc(d.error),"no");api("/admin/courses").then(function(x){if(x.ok)COURSES=x.courses});
+    var done="Saved. Visitors see the change within a minute. <a href='/courses/"+encodeURIComponent(d.slug)+"' target='_blank'>View on website</a> · <a href='#courses'>Back to courses</a>";
+    if(isNew){FLASH=done;location.hash="course/"+encodeURIComponent(d.id)}else{FLASH=done;viewCourseEdit(id)}})}};
+ if(isNew)draw();else api("/admin/course?id="+encodeURIComponent(id)).then(function(d){if(!d.ok)return msg($("cfw"),esc(d.error),"no");draw(d.course)})}
+
+// ---------- enquiries: contact / callback, franchise, feedback ----------
+var EQF="New";
+function viewEnquiries(type){if(["contact","franchise","feedback"].indexOf(type)<0)type="contact";
+ $("app").innerHTML="<h1>Enquiries</h1><div class='row' style='margin:14px 0'>"+[["contact","Contact and callback"],["franchise","Franchise"],["feedback","Feedback"]].map(function(t){return "<a class='btn sm "+(t[0]===type?"":"o")+"' href='#enquiries/"+t[0]+"'>"+t[1]+"</a>"}).join("")
+ +"<label class='sr' for='eqf'>Show</label><select id='eqf' style='width:auto;margin-left:auto'><option value='New'>New</option><option value='Contacted'>Contacted</option><option value='Closed'>Closed</option><option value=''>All</option></select></div><div id='eql'><p class='empty'>Loading…</p></div>";
+ $("eqf").value=EQF;$("eqf").onchange=function(){EQF=this.value;loadEnq(type)};loadEnq(type)}
+function loadEnq(type){var el=$("eql");el.innerHTML="<p class='empty'>Loading…</p>";
+ api("/admin/enquiries?type="+type+"&status="+encodeURIComponent(EQF)).then(function(d){if(!d.ok)return msg(el,esc(d.error),"no");
+  if(!d.items.length)return el.innerHTML="<div class='c'><p class='empty'>No "+(EQF?EQF.toLowerCase()+" ":"")+"items.</p></div>";
+  el.innerHTML=d.items.map(function(x){var lines=[];
+   if(type==="contact")lines=[["Subject",x.subject],["Course",x.course],["Email",x.email],["Message",x.message]];
+   if(type==="franchise")lines=[["Place",[x.city,x.state,x.pincode].filter(Boolean).join(", ")],["Email",x.email],["Profession",x.profession],["Preferred location",x.preferredLocation],["Space",x.space],["Message",x.message]];
+   if(type==="feedback")lines=[["Course",x.course],["Rating","★".repeat(x.rating||0)],["Feedback",x.message]];
+   return "<div class='c course'><div class='head'><div><h3>"+esc(x.name)+(x.source==="callback"?" <span class='pill'>Callback</span>":"")+"</h3><p class='hint' style='margin:2px 0 0'>"+fd(x.createdAt)+(x.mobileNo?" · <a href='tel:+91"+esc(x.mobileNo)+"'>"+esc(x.mobileNo)+"</a> · <a target='_blank' rel='noopener' href='"+waLink(x.mobileNo,"Hello "+x.name+", this is Guru Computer Institute.")+"'>WhatsApp</a>":"")+"</p></div><span class='pill "+(x.status==="New"?"due":"ok")+"'>"+esc(x.status)+"</span></div>"
+    +"<div class='kv'>"+lines.filter(function(l){return l[1]}).map(function(l){return "<div><span>"+l[0]+"</span><b>"+esc(l[1])+"</b></div>"}).join("")+"</div>"
+    +"<div class='row' style='margin-top:12px'>"+["New","Contacted","Closed"].filter(function(st){return st!==x.status}).map(function(st){return "<button class='btn sm o' data-id='"+esc(x.id)+"' data-st='"+st+"'>Mark "+st.toLowerCase()+"</button>"}).join("")
+    +(type==="feedback"?"<button class='btn sm "+(x.showOnSite?"o":"or")+"' data-id='"+esc(x.id)+"' data-show='"+(x.showOnSite?"0":"1")+"'>"+(x.showOnSite?"Remove from website":"Show on website")+"</button>":"")+"</div></div>"}).join("");
+  el.querySelectorAll("[data-id]").forEach(function(b){b.onclick=function(){busy(b,true,"…");var body={type:type,id:b.dataset.id};if(b.dataset.st)body.status=b.dataset.st;if(b.dataset.show)body.showOnSite=b.dataset.show==="1";
+   api("/admin/enquiry/update",body).then(function(r){if(!r.ok){busy(b,false);return alertMsg(r.error)}loadEnq(type)})}})})}
+function alertMsg(t){var el=$("eql")||$("app");el.insertAdjacentHTML("afterbegin","<div class='msg no'>"+esc(t)+"</div>")}
+
+// ---------- franchise centres ----------
+function viewFranchises(){$("app").innerHTML="<h1>Franchise centres</h1><div id='frl' class='c' style='margin-top:14px'><p class='empty'>Loading…</p></div>";
+ api("/admin/franchises").then(function(d){var el=$("frl");if(!d.ok)return msg(el,esc(d.error),"no");if(!d.franchises.length)return el.innerHTML="<p class='empty'>No franchise centres yet.</p>";
+  el.innerHTML="<div class='scroll'><table class='tbl'><thead><tr><th>Centre</th><th>Director</th><th>Mobile</th><th class='num'>Students</th><th>Valid till</th><th></th></tr></thead><tbody>"+d.franchises.map(function(f){return "<tr><td><b>"+esc(f.name)+"</b><br><span class='hint'>"+esc(f.id)+(f.district?" · "+esc(f.district):"")+"</span></td><td>"+esc(f.director||"-")+"</td><td>"+(f.mobileNo?"<a href='tel:+91"+esc(f.mobileNo)+"'>"+esc(f.mobileNo)+"</a>":"-")+"</td><td class='num'>"+f.students+"</td><td>"+fd(f.validTill)+" <span class='pill "+(f.valid?"ok":"due")+"'>"+(f.valid?"Active":"Expired")+"</span></td><td><a href='#students' data-centre='"+esc(f.id)+"'>Students</a></td></tr>"}).join("")+"</tbody></table></div>";
+  el.querySelectorAll("[data-centre]").forEach(function(a){a.onclick=function(){SQ={q:"",centre:a.dataset.centre,page:1}}})})}
+
+// ---------- website settings ----------
+function viewSettings(){$("app").innerHTML="<h1>Website settings</h1><div id='stw'><p class='empty'>Loading…</p></div>";
+ api("/admin/settings").then(function(d){if(!d.ok)return msg($("stw"),esc(d.error),"no");var rows=d.stats.slice();while(rows.length<4)rows.push({value:"",label:""});
+  $("stw").innerHTML="<form id='sef' class='c' style='margin-top:14px'><h2>Numbers on the homepage</h2><p class='hint'>Only show numbers you can stand behind. Leave all rows empty to show live counts from the database: students enrolled, courses and franchise centres.</p>"
+  +rows.map(function(r,i){return "<div class='fg' style='margin-top:12px'><div><label for='sv"+i+"'>Number "+(i+1)+"</label><input id='sv"+i+"' maxlength='20' value='"+esc(r.value)+"' placeholder='e.g. 250+'></div><div><label for='sl"+i+"'>Label</label><input id='sl"+i+"' maxlength='40' value='"+esc(r.label)+"' placeholder='e.g. Students trained'></div></div>"}).join("")
+  +"<button class='btn or' id='ssave' style='margin-top:16px'>Save</button><div id='sem'></div></form>";
+  $("sef").onsubmit=function(e){e.preventDefault();var stats=[0,1,2,3].map(function(i){return{value:$("sv"+i).value.trim(),label:$("sl"+i).value.trim()}}).filter(function(x){return x.value||x.label});
+   var b=$("ssave");busy(b,true);api("/admin/settings",{stats:stats}).then(function(r){busy(b,false);msg($("sem"),r.ok?"Saved. The homepage shows the new numbers within a minute.":esc(r.error),r.ok?"ok":"no")})}})}
 
 boot();
 </script>
