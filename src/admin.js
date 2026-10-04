@@ -1,6 +1,6 @@
 // Admin routes. Everything is written in the same shape as the old system's records.
 import { json, fail, body, session, adminList } from "./http.js";
-import { num, str, cleanId, fmtDuration, maskEmail, indianMobile, cloudinaryReady, uploadPrivate, randomCode, hex24, escapeRegex } from "./lib.js";
+import { num, str, cleanId, fmtDuration, maskEmail, indianMobile, cloudinaryReady, uploadPrivate, uploadPublicImage, cloudUrl, randomCode, hex24, escapeRegex, slugify } from "./lib.js";
 
 const HEAD_OFFICE = { _id: "GCI000", name: "Guru Computer Institute" };
 const PAY_MODES = ["Cash", "UPI", "Bank Transfer", "Card", "Cheque"];
@@ -24,7 +24,7 @@ const guard = (fn) => async (request, env, db) => {
 };
 
 async function allCourses(db) {
-  return db.collection("courses").find({}, { projection: { name: 1, price: 1, duration: 1, category: 1, visiblity: 1, isFree: 1 } }).toArray();
+  return db.collection("courses").find({}, { projection: { name: 1, price: 1, duration: 1, category: 1, visiblity: 1, isFree: 1, isTopCourse: 1 } }).toArray();
 }
 async function findCourse(db, id) {
   return (await allCourses(db)).find((c) => String(c._id) === String(id)) || null;
@@ -125,7 +125,12 @@ async function stats(request, env, db) {
   const students = await db.collection("students").find({}, { projection: { admissionDate: 1, institute: 1, enrolledCourses: 1 } }).toArray();
   const receipts = await db.collection("feereceipts").find({}, { projection: { amount: 1, paymentDate: 1, studentId: 1, courseId: 1 } }).toArray();
   const fees = await db.collection("fees").find({}, { projection: { courses: 1 } }).toArray();
-  const requests = await db.collection("admissionrequests").countDocuments({ status: "New" });
+  const [requests, enquiries, franchiseEnquiries, feedbackNew] = await Promise.all([
+    db.collection("admissionrequests").countDocuments({ status: "New" }),
+    db.collection("contactenquiries").countDocuments({ status: "New" }),
+    db.collection("franchiseenquiries").countDocuments({ status: "New" }),
+    db.collection("feedback").countDocuments({ status: "New" }),
+  ]);
   return json({
     ok: true,
     students: students.length,
@@ -133,7 +138,7 @@ async function stats(request, env, db) {
     admissionsThisMonth: students.filter((s) => s.admissionDate && new Date(s.admissionDate) >= monthStart).length,
     collectedThisMonth: receipts.filter((r) => r.paymentDate && new Date(r.paymentDate) >= monthStart).reduce((a, r) => a + num(r.amount), 0),
     totalPending: (() => { const byId = Object.fromEntries(fees.map((f) => [f._id, f])); return students.reduce((a, st) => a + dueFor(st, byId[st._id], receipts), 0); })(),
-    newRequests: requests,
+    newRequests: requests, newEnquiries: enquiries, newFranchiseEnquiries: franchiseEnquiries, newFeedback: feedbackNew,
     uploads: cloudinaryReady(env),
   });
 }
@@ -142,7 +147,7 @@ async function stats(request, env, db) {
 async function courses(request, env, db) {
   const list = await allCourses(db);
   list.sort((a, b) => String(a.name).localeCompare(String(b.name)));
-  return json({ ok: true, courses: list.map((c) => ({ id: String(c._id), name: str(c.name), price: c.isFree ? 0 : num(c.price), duration: fmtDuration(c.duration), public: c.visiblity === "Public" })) });
+  return json({ ok: true, courses: list.map((c) => ({ id: String(c._id), name: str(c.name), price: c.isFree ? 0 : num(c.price), duration: fmtDuration(c.duration), public: c.visiblity === "Public", top: c.isTopCourse === true })) });
 }
 
 // ---------- GET /api/admin/students?q=&centre=&page= ----------
@@ -375,6 +380,108 @@ async function requestStatus(request, env, db) {
   return json({ ok: true });
 }
 
+// ---------- courses: add, edit, hide (never deleted, because students refer to them) ----------
+const COURSE_TYPES = ["Diploma", "Certificate", "Short Course"];
+async function courseDetail(request, env, db) {
+  const id = str(new URL(request.url).searchParams.get("id"), 40);
+  const c = (await db.collection("courses").find({}, { projection: { students: 0 } }).toArray()).find((x) => String(x._id) === id);
+  if (!c) return fail("Course not found.", 404);
+  return json({ ok: true, course: { id: String(c._id), name: str(c.name), slug: str(c.slug), price: num(c.price), isFree: c.isFree === true,
+    durationValue: str(c.duration?.value, 4), durationType: str(c.duration?.type || "Month", 10), category: str(c.category, 60), type: str(c.type, 40),
+    level: str(c.level, 40), language: str(c.language, 60), description: str(c.description, 400), longDescription: str(c.longDescription, 5000),
+    syllabus: (Array.isArray(c.syllabus) ? c.syllabus : []).map((x) => str(x, 200)), eligibility: str(c.eligibility, 300), careerScope: str(c.careerScope, 400),
+    isTopCourse: c.isTopCourse === true, visible: c.visiblity === "Public", image: cloudUrl(c.thumbnail), canUpload: cloudinaryReady(env) } });
+}
+async function courseSave(request, env, db) {
+  const b = await body(request, 4_500_000);   // room for one course picture
+  const name = str(b.name, 150), price = Math.round(num(b.price)), dv = Math.round(num(b.durationValue));
+  const dt = ["Day", "Week", "Month", "Year"].includes(b.durationType) ? b.durationType : "Month";
+  if (name.length < 3) return fail("Enter the course name.", 400, { field: "name" });
+  if (!b.isFree && !(price > 0)) return fail("Enter the course fee, or tick Free course.", 400, { field: "price" });
+  if (!(dv > 0 && dv <= 60)) return fail("Enter the duration as a number, for example 6.", 400, { field: "durationValue" });
+  const syllabus = (Array.isArray(b.syllabus) ? b.syllabus : String(b.syllabus || "").split("\n")).map((x) => str(x, 200)).filter(Boolean).slice(0, 60);
+  const all = await db.collection("courses").find({}, { projection: { name: 1, slug: 1, createdAt: 1 } }).toArray();
+  const existing = b.id ? all.find((x) => String(x._id) === String(b.id)) : null;
+  if (b.id && !existing) return fail("Course not found.", 404);
+  if (all.some((x) => x !== existing && String(x.name).trim().toLowerCase() === name.toLowerCase())) return fail("Another course already has this name.", 409, { field: "name" });
+  let slug = slugify(b.slug || existing?.slug || name);
+  if (all.some((x) => x !== existing && slugify(x.slug || x.name) === slug)) slug = `${slug}-${Date.now().toString(36).slice(-4)}`;
+  // Course picture: uploaded first, so nothing is saved if the upload fails.
+  let thumbnail;
+  if (b.image && typeof b.image === "object") {
+    if (!cloudinaryReady(env)) return fail("Course pictures need the Cloudinary keys. Add them in Cloudflare, then try again.", 400, { field: "image" });
+    try { thumbnail = await uploadPublicImage(env, b.image, "courses", slug); }
+    catch (e) { return fail(e.message.startsWith("Upload failed") ? "The picture could not be uploaded. Please try again." : e.message, 400, { field: "image" }); }
+  } else if (b.removeImage === true) thumbnail = "";
+  const now = new Date();
+  const fields = { name, slug, price: String(b.isFree ? 0 : price), isFree: !!b.isFree, duration: { type: dt, value: String(dv) },
+    category: str(b.category, 60) || "Computer-Applications", type: COURSE_TYPES.includes(b.type) ? b.type : "Certificate", level: str(b.level, 40) || "Beginner",
+    language: str(b.language, 60) || "English & Hindi", description: str(b.description, 400), longDescription: str(b.longDescription, 5000), syllabus,
+    eligibility: str(b.eligibility, 300), careerScope: str(b.careerScope, 400), isTopCourse: !!b.isTopCourse, visiblity: b.visible === false ? "Private" : "Public",
+    lastUpdated: now, updatedAt: now };
+  if (existing) {
+    // Only change what the form sent, so a partial edit never erases other details.
+    const from = { category: "category", type: "type", level: "level", language: "language", description: "description", longDescription: "longDescription",
+      syllabus: "syllabus", eligibility: "eligibility", careerScope: "careerScope", isTopCourse: "isTopCourse", visiblity: "visible", isFree: "isFree" };
+    for (const [field, key] of Object.entries(from)) if (!(key in b)) delete fields[field];
+    if (!("isFree" in b)) fields.price = String(price || num(existing.price));
+    if (thumbnail !== undefined) fields.thumbnail = thumbnail;
+    await db.collection("courses").updateOne({ _id: existing._id }, { $set: fields });   // existing._id keeps its original type (ObjectId)
+    return json({ ok: true, id: String(existing._id), slug });
+  }
+  const r = await db.collection("courses").insertOne({ ...fields, thumbnail: thumbnail || "", students: [], studentsCount: "0", rating: [], createdAt: now, __v: 0 });
+  return json({ ok: true, id: String(r.insertedId), slug });
+}
+
+// ---------- enquiries: contact / callback, franchise, feedback ----------
+const ENQ = { contact: "contactenquiries", franchise: "franchiseenquiries", feedback: "feedback" };
+const ENQ_STATUS = ["New", "Contacted", "Closed"];
+async function enquiries(request, env, db) {
+  const u = new URL(request.url), type = u.searchParams.get("type"), status = u.searchParams.get("status");
+  if (!ENQ[type]) return fail("Unknown enquiry type.");
+  const filter = ENQ_STATUS.includes(status) ? { status } : {};
+  const rows = await db.collection(ENQ[type]).find(filter, { sort: { createdAt: -1 }, limit: 200 }).toArray();
+  const keep = ["name", "mobileNo", "email", "subject", "message", "course", "source", "city", "state", "pincode", "profession", "preferredLocation", "space", "rating", "status", "showOnSite"];
+  return json({ ok: true, items: rows.map((r) => { const o = { id: String(r._id), createdAt: r.createdAt || null }; for (const k of keep) if (r[k] !== undefined) o[k] = typeof r[k] === "string" ? str(r[k], 1000) : r[k]; return o; }) });
+}
+async function enquiryUpdate(request, env, db) {
+  const b = await body(request);
+  if (!ENQ[b.type]) return fail("Unknown enquiry type.");
+  const set = { updatedAt: new Date() };
+  if (b.status !== undefined) { if (!ENQ_STATUS.includes(b.status)) return fail("Unknown status."); set.status = b.status; }
+  if (b.type === "feedback" && b.showOnSite !== undefined) set.showOnSite = b.showOnSite === true;
+  const r = await db.collection(ENQ[b.type]).updateOne({ _id: str(b.id, 40) }, { $set: set });
+  if (r && r.matchedCount === 0) return fail("Enquiry not found.", 404);
+  return json({ ok: true });
+}
+
+// ---------- franchise centres (read only for now) ----------
+async function franchises(request, env, db) {
+  const rows = await db.collection("franchises").find({}, { projection: { name: 1, "director.name": 1, mobileNo: 1, email: 1, district: 1, state: 1, grantDate: 1, certificates: 1, noOfComputers: 1 } }).toArray();
+  const counts = await db.collection("students").find({ "institute._id": { $regex: "^GCIFRN" } }, { projection: { institute: 1 } }).toArray();
+  const per = {}; counts.forEach((s) => { per[s.institute._id] = (per[s.institute._id] || 0) + 1; });
+  return json({ ok: true, franchises: rows.map((f) => {
+    const c = (f.certificates || []).slice().sort((a, b) => new Date(b.validTill || 0) - new Date(a.validTill || 0))[0];
+    return { id: String(f._id), name: str(f.name).trim(), director: str(f.director?.name), mobileNo: str(f.mobileNo, 15), email: str(f.email), district: str(f.district),
+      state: str(f.state), grantDate: f.grantDate || null, computers: num(f.noOfComputers), students: per[f._id] || 0,
+      certificateId: str(c?.certificateId, 40), validTill: c?.validTill || null, valid: !!(c?.validTill && new Date(c.validTill) >= new Date()) };
+  }) });
+}
+
+// ---------- website settings: the numbers shown on the homepage ----------
+async function settingsGet(request, env, db) {
+  const s = await db.collection("settings").findOne({ _id: "site" });
+  return json({ ok: true, stats: (s?.stats || []).map((x) => ({ value: str(x.value, 20), label: str(x.label, 40) })) });
+}
+async function settingsSave(request, env, db, admin) {
+  const b = await body(request);
+  const rows = (Array.isArray(b.stats) ? b.stats : []).map((x) => ({ value: str(x?.value, 20), label: str(x?.label, 40) })).filter((x) => x.value || x.label);
+  if (rows.length > 4) return fail("Add at most 4 numbers.");
+  if (rows.some((x) => !x.value || !x.label)) return fail("Each number needs both a value and a label.");
+  await db.collection("settings").updateOne({ _id: "site" }, { $set: { stats: rows, updatedAt: new Date(), updatedBy: admin.id } }, { upsert: true });
+  return json({ ok: true });
+}
+
 // ---------- GET /api/certificate?id= (public, for the printable certificate page) ----------
 export async function certificatePublic(request, env, db) {
   const id = cleanId(new URL(request.url).searchParams.get("id"));
@@ -401,4 +508,11 @@ export const ADMIN_ROUTES = {
   "POST /api/admin/certificate": guard(issueCertificate),
   "GET /api/admin/requests": guard(requests),
   "POST /api/admin/request/status": guard(requestStatus),
+  "GET /api/admin/course": guard(courseDetail),
+  "POST /api/admin/course/save": guard(courseSave),
+  "GET /api/admin/enquiries": guard(enquiries),
+  "POST /api/admin/enquiry/update": guard(enquiryUpdate),
+  "GET /api/admin/franchises": guard(franchises),
+  "GET /api/admin/settings": guard(settingsGet),
+  "POST /api/admin/settings": guard(settingsSave),
 };
